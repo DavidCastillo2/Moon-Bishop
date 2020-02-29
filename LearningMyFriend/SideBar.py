@@ -1,0 +1,3 @@
+#refference globalCurrSlide
+#array[slide1,slide2...
+#return na
