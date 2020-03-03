@@ -18,3 +18,15 @@ class Powerpoint(Drawable):
 #pdf.cell(200, 10, txt="Welcome to Python!", ln=1, align="C")
 #pdf.output("simple_demo.pdf")
 
+
+#from tkinter import *
+#from winsound import *
+
+#root = Tk() # create tkinter window
+
+#play = lambda: PlaySound('Sound.wav', SND_FILENAME)
+#button = Button(root, text = 'Play', command = play)
+
+#button.pack()
+#root.mainloop()
+
