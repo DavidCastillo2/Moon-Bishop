@@ -8,6 +8,8 @@ class Window(Frame):
     DEFAULT_COLOR = 'black'
 
     global canvas
+    global color
+    color = DEFAULT_COLOR
     canvas = Canvas(root, width=900, height=500)
     canvas.pack()
 
@@ -85,16 +87,11 @@ class Window(Frame):
 
     def chooseColor(self):
         global color  # set color to global so it updates in other function
-        self.color = askcolor(color=self.color)[1]
+        col = askcolor()
+        color = col[1]
 
     def paint(self, event):
-        paint_color = 'white' if self.eraser_on else self.color
-        if self.old_x and self.old_y:
-            self.c.create_line(self.old_x, self.old_y, event.x, event.y,
-                               width=self.line_width, fill=paint_color,
-                               capstyle=ROUND, smooth=TRUE, splinesteps=36)
-        self.old_x = event.x
-        self.old_y = event.y
+        canvas.create_rectangle(100, 50, 200, 150, fill=color)
 
 
 app = Window(root)
