@@ -1,10 +1,14 @@
 from tkinter import *
 from tkinter.colorchooser import askcolor
 from PIL import Image
+from pip._vendor.distlib.compat import raw_input
 from pyscreenshot import grab
 import sys
 from pathlib import Path
 import img2pdf
+import webbrowser
+
+
 import os
 
 root = Tk()
@@ -12,6 +16,7 @@ root = Tk()
 class Window(Frame):
     DEFAULT_PEN_SIZE = 5.0
     DEFAULT_COLOR = 'black'
+
 
     global canvas
     global color
@@ -44,7 +49,7 @@ class Window(Frame):
         presentButton = Button(self, text="Present", height=1, width=5)
 
         imageButton = Button(self, text="Image", height=1, width=5)
-        linkButton = Button(self, text="Links", height=1, width=5)
+        linkButton = Button(self, text="Links", command=self.linker, height=1, width=5)
         soundButton = Button(self, text="Sound", height=1, width=6)
 
         textButton = Button(self, text="Text", height=1, width=5)
@@ -97,6 +102,10 @@ class Window(Frame):
     def clickExitButton(self):
         exit()
 
+
+
+
+
     def chooseColor(self):
         global color  # set color to global so it updates in other function
         col = askcolor()
@@ -105,6 +114,11 @@ class Window(Frame):
     def paint(self, event):
         canvas.create_rectangle(100, 50, 200, 150, fill=color)
 
+
+
+    def linker(self):
+        google = raw_input('Google search:')
+        webbrowser.open_new_tab('http://www.google.com/search?btnG=1&q=%s' % google)
     #def savePDF(self):
 
 
