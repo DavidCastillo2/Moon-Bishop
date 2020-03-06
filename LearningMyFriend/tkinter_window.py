@@ -36,9 +36,9 @@ def openfile():
     return filename
 
 class popupWindow(object):
-    def __init__(self,master):
+    def __init__(self, master, label):
         top=self.top=Toplevel(master)
-        self.l=Label(top,text="Type in what you'd like displayed")
+        self.l=Label(top, text=label)
         self.l.pack()
         self.e=Entry(top)
         self.e.pack()
@@ -51,9 +51,12 @@ class popupWindow(object):
 class Window(Frame):
     DEFAULT_PEN_SIZE = 5.0
     DEFAULT_COLOR = 'black'
+    DEFAULT_TEXT_SIZE = 12
 
     global color
+    global textsize
     color = DEFAULT_COLOR
+    textsize = DEFAULT_TEXT_SIZE
 
     def toggle_geom(self, event):
         geom = self.master.winfo_geometry()
@@ -102,7 +105,7 @@ class Window(Frame):
 
         textButton = Button(self, text="Text", command=self.type_text, height=standardHeight, width=standardWidth)
         codeButton = Button(self, text="Code", height=standardHeight, width=standardWidth)
-        txtsizeButton = Button(self, text="Text Size", height=standardHeight, width=math.ceil((6/900) * screenWidth))
+        txtsizeButton = Button(self, text="Text Size", command=self.textSize, height=standardHeight, width=math.ceil((6/900) * screenWidth))
 
         newSlide = Button(self, text="New Slide", height=standardHeight, width=math.ceil(17/900*screenWidth))
         numSlide = Button(self, text="Number Slides", height=standardHeight, width=math.ceil(17/900*screenWidth))
@@ -179,24 +182,28 @@ class Window(Frame):
 
     def type_text(self):
         fontChoice = self.defFont.get()
-        print(self.defFont.get())
         global color
+        global textsize
 
-        self.popup()
-
-        font = Font(family=fontChoice, size=12)
+        self.popup("Input text")
 
         global mousePosX
         global mousePosY
         x = mousePosX
         y = mousePosY
 
+        font = Font(family=fontChoice, size=textsize)
         self.slide_id = self.slide.create_text(x, y, anchor="nw", font=font, fill=color)
 
         self.slide.itemconfig(self.slide_id, text=self.entryValue())
 
-    def popup(self):
-        self.w = popupWindow(self.master)
+    def textSize(self):
+        self.popup("Input text size")
+        global textsize
+        textsize = int(self.entryValue())
+
+    def popup(self, label):
+        self.w = popupWindow(self.master, label)
         self.master.wait_window(self.w.top)
 
     def entryValue(self):
@@ -275,25 +282,3 @@ def paint(event):
     paint_color = color
 
     #def savePDF(self):
-
-
-
-# Set FullScreen
-root.attributes("-fullscreen", True)
-
-# Save Screen Resolution
-screenWidth = root.winfo_screenwidth()
-screenHeight = root.winfo_screenheight()
-
-app = Window(root)
-
-
-# set window title
-root.wm_title("Slides")
-root.bind('<Motion>', paint)
-app.configure(background="black")
-
-
-# show window
-root.mainloop()
-
