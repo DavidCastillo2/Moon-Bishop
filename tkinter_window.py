@@ -40,6 +40,11 @@ class Window(Frame):
         self.slide = Canvas(self, width=math.ceil(650/900*screenWidth),
                             height=math.ceil(400/600*screenHeight), bg="white", highlightbackground="grey")
         self.slide.place(x=math.ceil(125/900*screenWidth), y=math.ceil(150/600*screenHeight))
+        self.slide.x = math.ceil(125/900*screenWidth)
+        self.slide.y = math.ceil(150/600*screenHeight)
+        self.slide.width = math.ceil(650/900*screenWidth)
+        self.slide.height = math.ceil(400/600*screenHeight)
+        self.slide.update()
 
         # widget can take all window
         self.pack(fill=BOTH, expand=1)
@@ -159,9 +164,10 @@ class Window(Frame):
         # Update the width height
 
     def saveScreenShot(self):
-        width = 650
-        height = 500
-        im = grab(bbox=(0, 0, width, height))
+        x = self.slide.x
+        y = self.slide.y
+        # the 4 here is because of the boarder the Canvas has
+        im = grab(bbox=(self.slide.x, self.slide.y, x+self.slide.width+4, y+self.slide.height+4))
 
         indexPath = Path(__file__).parent / "Screenshots/index.txt"
 
