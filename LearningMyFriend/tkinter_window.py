@@ -14,9 +14,18 @@ import sys
 import random
 
 root = Tk()
+DEFAULT_COLOR = 'black'
+color = DEFAULT_COLOR
 
 def motion(event):
     x, y = event.x, event.y
+
+
+def showxy(event):
+    global mousePosX
+    global mousePosY
+    mousePosX = event.x
+    mousePosY = event.y
 
 class Window(Frame):
     DEFAULT_PEN_SIZE = 5.0
@@ -112,6 +121,8 @@ class Window(Frame):
         saveButton.place(x=math.ceil(800 / 900 * screenWidth), y=math.ceil(4 / 600 * screenHeight))
         loadButton.place(x=math.ceil(850 / 900 * screenWidth), y=math.ceil(35 / 600 * screenHeight))
 
+        self.slide.bind('<Button>', showxy)
+
     def setup(self):
         self.old_x = None
         self.old_y = None
@@ -135,8 +146,12 @@ class Window(Frame):
     def upload_image(self):
         file_path = filedialog.askopenfilename()
         photo = ImageTk.PhotoImage(file=file_path)
-        x = random.randint(0, 600)
-        y = random.randint(0, 200)
+
+        global mousePosX
+        global mousePosY
+        x = mousePosX
+        y = mousePosY
+
         self.slide.create_image(x, y, image=photo, anchor=NW)
         img = Label(image=photo)
         img.image = photo  # reference to image
@@ -150,8 +165,10 @@ class Window(Frame):
 
         font = Font(family=fontChoice, size=12)
 
-        x = random.randint(0, 600)
-        y = random.randint(0, 200)
+        global mousePosX
+        global mousePosY
+        x = mousePosX
+        y = mousePosY
 
         self.slide_id = self.slide.create_text(x, y, anchor="nw", font=font, fill=color)
 
@@ -237,7 +254,7 @@ root.attributes("-fullscreen", True)
 #screenHeight = 600
 
 # Save Screen Resolution
-screenWidth  = root.winfo_screenwidth()
+screenWidth = root.winfo_screenwidth()
 screenHeight = root.winfo_screenheight()
 
 app = Window(root)
