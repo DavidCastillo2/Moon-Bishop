@@ -24,7 +24,7 @@ class Window(Frame):
     global canvas
     global color
     color = DEFAULT_COLOR
-    canvas = Canvas(root, width=900, height=500, bg="white")
+    canvas = Canvas(root, width=650, height=500, bg="white")
     canvas.pack(side=BOTTOM)
 
     def toggle_geom(self, event):
@@ -49,7 +49,7 @@ class Window(Frame):
         colorButton = Button(self, text="Color", command=self.chooseColor, height=1, width=5)
         brushButton = Button(self, text="Pen", command=self.paint, height=1, width=5)
         latexButton = Button(self, text="LaTex", height=1, width=5)
-        presentButton = Button(self, text="Present", height=1, width=5)
+        presentButton = Button(self, text="Present", height=1, width=12)
 
         imageButton = Button(self, text="Image", command=self.upload_image, height=1, width=5)
         linkButton = Button(self, text="Links", height=1, width=5)
@@ -70,35 +70,31 @@ class Window(Frame):
         self.defFont = StringVar(master)
         self.defFont.set(font[0])  # default value
         fontButton = OptionMenu(master, self.defFont, *font)
-        fontButton.place(x=55, y=568)
+        fontButton.place(x=480, y=65)
 
         # place buttons
         # button columns
-        brushButton.place(x=0, y=4)
-        colorButton.place(x=0, y=35)
-        latexButton.place(x=0, y=67)
-
-        textButton.place(x=50, y=4)
-        codeButton.place(x=50, y=35)
-
-        imageButton.place(x=100, y=4)
-        linkButton.place(x=100, y=35)
-
-        soundButton.place(x=150, y=4)
-        txtsizeButton.place(x=150, y=35)
-
         newSlide.place(x=240, y=4)
         numSlide.place(x=400, y=4)
         remSlide.place(x=550, y=4)
 
+        presentButton.place(x=280, y=35)
+        slideColor.place(x=380, y=35)
+        textButton.place(x=480, y=35)
+        brushButton.place(x=530, y=35)
+        colorButton.place(x=580, y=35)
+
+        codeButton.place(x=233, y=67)
+        imageButton.place(x=280, y=67)
+        soundButton.place(x=327, y=67)
+        linkButton.place(x=380, y=67)
+        txtsizeButton.place(x=427, y=67)
+        latexButton.place(x=627, y=67)
+
         # bottom right corner buttons
         exitButton.place(x=850, y=4)
         saveButton.place(x=800, y=4)
-        loadButton.place(x=800, y=35)
-        presentButton.place(x=850, y=35)
-
-        slideColor.place(x=800, y=67)
-
+        loadButton.place(x=850, y=35)
     def setup(self):
         self.old_x = None
         self.old_y = None
@@ -152,8 +148,8 @@ class Window(Frame):
         # Update the width height
 
     def saveScreenShot(self):
-        width = 900
-        height = 700
+        width = 650
+        height = 500
         im = grab(bbox=(0, 0, width, height))
 
         indexPath = Path(__file__).parent / "Screenshots/index.txt"
