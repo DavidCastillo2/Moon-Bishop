@@ -1,12 +1,15 @@
 import math
 from tkinter import *
 from tkinter.colorchooser import askcolor
+from PIL import Image
 from pyscreenshot import grab
+from tkinter import filedialog
 from PIL import Image, ImageTk
 from tkinter.font import Font
-import img2pdf
-from tkinter import filedialog
 from pathlib import Path
+import img2pdf
+import os
+import sys
 import playsound
 
 import random
@@ -25,7 +28,6 @@ def showxy(event):
     mousePosX = event.x
     mousePosY = event.y
 
-
 def openfile():
     filename = filedialog.askopenfilename(initialdir="/",
                                           title="Open Sound File",
@@ -33,6 +35,18 @@ def openfile():
                                                      ("WAV Files", "*.wav")))
     return filename
 
+class popupWindow(object):
+    def __init__(self,master):
+        top=self.top=Toplevel(master)
+        self.l=Label(top,text="Type in what you'd like displayed")
+        self.l.pack()
+        self.e=Entry(top)
+        self.e.pack()
+        self.b=Button(top,text='Ok',command=self.cleanup)
+        self.b.pack()
+    def cleanup(self):
+        self.value=self.e.get()
+        self.top.destroy()
 
 class Window(Frame):
     DEFAULT_PEN_SIZE = 5.0
@@ -140,12 +154,6 @@ class Window(Frame):
     def clickExitButton(self):
         exit()
 
-    def playSound(self):
-        file = openfile()
-        playsound.playsound(file, True)
-
-
-
     def chooseColor(self):
         global color  # set color to global so it updates in other function
         col = askcolor()
@@ -174,7 +182,7 @@ class Window(Frame):
         print(self.defFont.get())
         global color
 
-        text = Text(root)
+        self.popup()
 
         font = Font(family=fontChoice, size=12)
 
@@ -185,18 +193,28 @@ class Window(Frame):
 
         self.slide_id = self.slide.create_text(x, y, anchor="nw", font=font, fill=color)
 
-        self.slide.itemconfig(self.slide_id, text="text")
+        self.slide.itemconfig(self.slide_id, text=self.entryValue())
+
+    def popup(self):
+        self.w = popupWindow(self.master)
+        self.master.wait_window(self.w.top)
+
+    def entryValue(self):
+        return self.w.value
 
     def slide_color(self):
         global color
         self.slide.configure(bg=color)
 
-        # Update the width height
+    def playSound(self):
+        file = openfile()
+        button = self.slide.create_rectangle(10, 10, 100, 30, fill="grey40", )
+        self.slide.tag_bind(button, "<Button-1>", playsound.playsound(file, True))
 
     def saveScreenShot(self):
         x = self.slide.x
         y = self.slide.y
-        # the 4 here is because of the boarder the Canvas has
+        # the 4 here is because of the border the Canvas has
         im = grab(bbox=(self.slide.x, self.slide.y, x+self.slide.width+4, y+self.slide.height+4))
 
         indexPath = Path(__file__).parent / "Screenshots/index.txt"
@@ -262,9 +280,6 @@ def paint(event):
 
 # Set FullScreen
 root.attributes("-fullscreen", True)
-#root.geometry("900x600")
-#screenWidth = 900
-#screenHeight = 600
 
 # Save Screen Resolution
 screenWidth = root.winfo_screenwidth()
@@ -281,5 +296,4 @@ app.configure(background="black")
 
 # show window
 root.mainloop()
-
 
