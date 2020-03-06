@@ -1,15 +1,13 @@
 import math
 from tkinter import *
 from tkinter.colorchooser import askcolor
-from PIL import Image
 from pyscreenshot import grab
-from tkinter import filedialog
 from PIL import Image, ImageTk
 from tkinter.font import Font
-from pathlib import Path
 import img2pdf
-import os
-import sys
+from tkinter import filedialog
+from pathlib import Path
+import playsound
 
 import random
 
@@ -26,6 +24,15 @@ def showxy(event):
     global mousePosY
     mousePosX = event.x
     mousePosY = event.y
+
+
+def openfile():
+    filename = filedialog.askopenfilename(initialdir="/",
+                                          title="Open Sound File",
+                                          filetypes=(("MP3 Files", "*.mp3"),
+                                                     ("WAV Files", "*.wav")))
+    return filename
+
 
 class Window(Frame):
     DEFAULT_PEN_SIZE = 5.0
@@ -77,7 +84,7 @@ class Window(Frame):
 
         imageButton = Button(self, text="Image", command=self.upload_image, height=standardHeight, width=standardWidth)
         linkButton = Button(self, text="Links", height=standardHeight, width=standardWidth)
-        soundButton = Button(self, text="Sound", height=standardHeight, width=math.ceil(6/900 * screenWidth))
+        soundButton = Button(self, text="Sound", command=self.playSound, height=standardHeight, width=math.ceil(6/900 * screenWidth))
 
         textButton = Button(self, text="Text", command=self.type_text, height=standardHeight, width=standardWidth)
         codeButton = Button(self, text="Code", height=standardHeight, width=standardWidth)
@@ -132,6 +139,12 @@ class Window(Frame):
 
     def clickExitButton(self):
         exit()
+
+    def playSound(self):
+        file = openfile()
+        playsound.playsound(file, True)
+
+
 
     def chooseColor(self):
         global color  # set color to global so it updates in other function
@@ -268,3 +281,5 @@ app.configure(background="black")
 
 # show window
 root.mainloop()
+
+
