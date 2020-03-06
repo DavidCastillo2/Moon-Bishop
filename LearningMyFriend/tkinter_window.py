@@ -1,79 +1,127 @@
+import math
 from tkinter import *
 from tkinter.colorchooser import askcolor
+from PIL import Image
+from pyscreenshot import grab
+from tkinter import filedialog
+from PIL import Image, ImageTk
+from tkinter.font import Font
+from pathlib import Path
+import img2pdf
+import os
+import sys
+
+import random
 
 root = Tk()
+DEFAULT_COLOR = 'black'
+color = DEFAULT_COLOR
+
+def motion(event):
+    x, y = event.x, event.y
+
+
+def showxy(event):
+    global mousePosX
+    global mousePosY
+    mousePosX = event.x
+    mousePosY = event.y
 
 class Window(Frame):
     DEFAULT_PEN_SIZE = 5.0
     DEFAULT_COLOR = 'black'
 
-    global canvas
     global color
     color = DEFAULT_COLOR
-    canvas = Canvas(root, width=900, height=500)
-    canvas.pack()
+
+    def toggle_geom(self, event):
+        geom = self.master.winfo_geometry()
+        print(geom, self._geom)
+        self.master.geometry(self._geom)
+        self._geom = geom
 
     def __init__(self, master=None):
+
         Frame.__init__(self, master)
         self.master = master
+
+        # Create slideArea inside of Frame
+        self.slide = Canvas(self, width=math.ceil(650/900*screenWidth),
+                            height=math.ceil(400/600*screenHeight), bg="white", highlightbackground="grey")
+        self.slide.place(x=math.ceil(125/900*screenWidth), y=math.ceil(150/600*screenHeight))
+        self.slide.x = math.ceil(125/900*screenWidth)
+        self.slide.y = math.ceil(150/600*screenHeight)
+        self.slide.width = math.ceil(650/900*screenWidth)
+        self.slide.height = math.ceil(400/600*screenHeight)
+        self.slide.update()
 
         # widget can take all window
         self.pack(fill=BOTH, expand=1)
 
+        # Crate grey banner behind buttons
+        self.banner = Canvas(self, width=screenWidth, height=math.ceil(screenHeight/6), bg="grey")
+        self.banner.pack(side=TOP)
+
         # create button, link it to clickExitButton()
-        exitButton = Button(self, text="Exit", command=self.clickExitButton, height=1, width=5)
+        standardHeight = math.ceil(screenHeight / 600)
+        standardWidth = math.ceil((5 / 900) * screenWidth)
+        exitButton = Button(self, text="Exit", command=self.clickExitButton, height=standardHeight, width=standardWidth)
 
         # buttons
-        saveButton = Button(self, text="Save", height=1, width=5)
-        loadButton = Button(self, text="Load", height=1, width=5)
-        colorButton = Button(self, text="Color", command=self.chooseColor, height=1, width=5)
-        brushButton = Button(self, text="Pen", command=self.paint, height=1, width=5)
-        latexButton = Button(self, text="LaTex", height=1, width=5)
-        presentButton = Button(self, text="Present", height=1, width=5)
+        saveButton = Button(self, text="Save", command=self.saveScreenShot,height=standardHeight, width=standardWidth)
+        loadButton = Button(self, text="Load", height=standardHeight, width=standardWidth)
+        colorButton = Button(self, text="Color", command=self.chooseColor, height=standardHeight, width=standardWidth)
+        brushButton = Button(self, text="Pen", command=self.paint, height=standardHeight, width=standardWidth)
+        latexButton = Button(self, text="LaTex", height=standardHeight, width=standardWidth)
+        presentButton = Button(self, text="Present", height=standardHeight, width=math.ceil((12/900) * screenWidth))
 
-        imageButton = Button(self, text="Image", height=1, width=5)
-        linkButton = Button(self, text="Links", height=1, width=5)
-        soundButton = Button(self, text="Sound", height=1, width=6)
+        imageButton = Button(self, text="Image", command=self.upload_image, height=standardHeight, width=standardWidth)
+        linkButton = Button(self, text="Links", height=standardHeight, width=standardWidth)
+        soundButton = Button(self, text="Sound", height=standardHeight, width=math.ceil(6/900 * screenWidth))
 
-        textButton = Button(self, text="Text", height=1, width=5)
-        codeButton = Button(self, text="Code", height=1, width=5)
-        txtsizeButton = Button(self, text="Text Size", height=1, width=6)
+        textButton = Button(self, text="Text", command=self.type_text, height=standardHeight, width=standardWidth)
+        codeButton = Button(self, text="Code", height=standardHeight, width=standardWidth)
+        txtsizeButton = Button(self, text="Text Size", height=standardHeight, width=math.ceil((6/900) * screenWidth))
 
-        newSlide = Button(self, text="New Slide", height=1, width=17)
-        numSlide = Button(self, text="Number Slides", height=1, width=17)
-        remSlide = Button(self, text="Remove Current Slide", height=1, width=17)
+        newSlide = Button(self, text="New Slide", height=standardHeight, width=math.ceil(17/900*screenWidth))
+        numSlide = Button(self, text="Number Slides", height=standardHeight, width=math.ceil(17/900*screenWidth))
+        remSlide = Button(self, text="Remove Current Slide", height=standardHeight, width=math.ceil(17/900*screenWidth))
+
+        slideColor = Button(self, text="Set Slide Color",
+                            command=self.slide_color, height=standardHeight, width=math.ceil(12/900*screenWidth))
 
         # text
-        font = ["Times New Roman", "Bengali", "Comic Sans"]
-        variable = StringVar(master)
-        variable.set(font[0])  # default value
-        fontButton = OptionMenu(master, variable, *font)
-        fontButton.place(x=55, y=568)
+        font = ["Times New Roman", "Bengali", "Comic Sans MS"]
+        self.defFont = StringVar(master)
+        self.defFont.set(font[0])  # default value
+        fontButton = OptionMenu(self, self.defFont, *font)
+        fontButton.place(x=math.ceil(480/900*screenWidth), y=math.ceil(65/600*screenHeight))
 
         # place buttons
         # button columns
-        brushButton.place(x=0, y=4)
-        colorButton.place(x=0, y=35)
-        latexButton.place(x=0, y=67)
+        newSlide.place(x=math.ceil(240/900*screenWidth), y=math.ceil(4/600*screenHeight))
+        numSlide.place(x=math.ceil(400/900*screenWidth), y=math.ceil(4/600*screenHeight))
+        remSlide.place(x=math.ceil(550/900*screenWidth), y=math.ceil(4/600*screenHeight))
 
-        textButton.place(x=50, y=4)
-        codeButton.place(x=50, y=35)
+        presentButton.place(x=math.ceil(280/900*screenWidth), y=math.ceil(35/600*screenHeight))
+        slideColor.place(x=math.ceil(380/900*screenWidth), y=math.ceil(35/600*screenHeight))
+        textButton.place(x=math.ceil(480/900*screenWidth), y=math.ceil(35/600*screenHeight))
+        brushButton.place(x=math.ceil(530/900*screenWidth), y=math.ceil(35/600*screenHeight))
+        colorButton.place(x=math.ceil(580/900*screenWidth), y=math.ceil(35/600*screenHeight))
 
-        imageButton.place(x=100, y=4)
-        linkButton.place(x=100, y=35)
+        codeButton.place(x=math.ceil(233 / 900 * screenWidth), y=math.ceil(67 / 600 * screenHeight))
+        imageButton.place(x=math.ceil(280 / 900 * screenWidth), y=math.ceil(67 / 600 * screenHeight))
+        soundButton.place(x=math.ceil(327 / 900 * screenWidth), y=math.ceil(67 / 600 * screenHeight))
+        linkButton.place(x=math.ceil(380 / 900 * screenWidth), y=math.ceil(67 / 600 * screenHeight))
+        txtsizeButton.place(x=math.ceil(427 / 900 * screenWidth), y=math.ceil(67 / 600 * screenHeight))
+        latexButton.place(x=math.ceil(627 / 900 * screenWidth), y=math.ceil(67 / 600 * screenHeight))
 
-        soundButton.place(x=150, y=4)
-        txtsizeButton.place(x=150, y=35)
+        # Top right corner buttons
+        exitButton.place(x=math.ceil(850 / 900 * screenWidth), y=math.ceil(4 / 600 * screenHeight))
+        saveButton.place(x=math.ceil(800 / 900 * screenWidth), y=math.ceil(4 / 600 * screenHeight))
+        loadButton.place(x=math.ceil(850 / 900 * screenWidth), y=math.ceil(35 / 600 * screenHeight))
 
-        newSlide.place(x=210, y=4)
-        numSlide.place(x=210, y=35)
-        remSlide.place(x=210, y=67)
-
-        # bottom right corner buttons
-        exitButton.place(x=850, y=4)
-        saveButton.place(x=800, y=4)
-        loadButton.place(x=800, y=35)
-        presentButton.place(x=850, y=35)
+        self.slide.bind('<Button>', showxy)
 
     def setup(self):
         self.old_x = None
@@ -90,18 +138,133 @@ class Window(Frame):
         col = askcolor()
         color = col[1]
 
-    def paint(self, event):
-        canvas.create_rectangle(100, 50, 200, 150, fill=color)
+    def paint(self):
+        x = random.randint(0, 600)
+        y = random.randint(0, 200)
+        self.slide.create_rectangle(x, x+50, y, y+50, fill=color)
 
+    def upload_image(self):
+        file_path = filedialog.askopenfilename()
+        photo = ImageTk.PhotoImage(file=file_path)
+
+        global mousePosX
+        global mousePosY
+        x = mousePosX
+        y = mousePosY
+
+        self.slide.create_image(x, y, image=photo, anchor=NW)
+        img = Label(image=photo)
+        img.image = photo  # reference to image
+
+    def type_text(self):
+        fontChoice = self.defFont.get()
+        print(self.defFont.get())
+        global color
+
+        text = Text(root)
+
+        font = Font(family=fontChoice, size=12)
+
+        global mousePosX
+        global mousePosY
+        x = mousePosX
+        y = mousePosY
+
+        self.slide_id = self.slide.create_text(x, y, anchor="nw", font=font, fill=color)
+
+        self.slide.itemconfig(self.slide_id, text="text")
+
+    def slide_color(self):
+        global color
+        self.slide.configure(bg=color)
+
+        # Update the width height
+
+    def saveScreenShot(self):
+        x = self.slide.x
+        y = self.slide.y
+        # the 4 here is because of the boarder the Canvas has
+        im = grab(bbox=(self.slide.x, self.slide.y, x+self.slide.width+4, y+self.slide.height+4))
+
+        indexPath = Path(__file__).parent / "Screenshots/index.txt"
+
+        # Check to see if the index File exists
+        if not Path.exists(indexPath):
+            indexFile = open(indexPath, "w")
+            indexFile.write(str(1))  # Create Index File
+            index = 1
+        else:
+            indexFile = open(indexPath, "r+")
+            index = indexFile.readline()
+            index = int(index)
+            index = index + 1
+
+            # Update Index File
+            indexFile.close()
+            indexFile = open(indexPath, "w")
+            indexFile.close()
+            indexFile = open(indexPath, "r+")
+            indexFile.write(str(index))
+
+        # Save Image
+        tempString1 = "Screenshots/slide%s.jpeg" % index
+        im.save(tempString1, "JPEG")
+        imagePath = Path(__file__).parent / tempString1
+
+        # Making PDF
+        tempString2 = "PDFs/PDF%s.pdf" % (index)
+        pdfPath = Path(__file__).parent / tempString2
+        pdfFile = open(pdfPath, "wb")
+        savedImage = Image.open(imagePath)
+        pdfBytes = img2pdf.convert(savedImage.filename)
+        pdfFile.write(pdfBytes)
+
+        # Close all Files
+        indexFile.close()
+        pdfFile.close()
+        savedImage.close()
+
+        # Potential Fix, change grab resolution to accomdate scaled elements
+        '''
+        img = grab(bbox=(100, 200, 300, 400))
+        # to keep the aspect ratio
+        w = 300
+        h = 400
+        maxheight = 600
+        maxwidth = 800
+        ratio = min(maxwidth/width, maxheight/height)
+        # correct image size is not #oldsize * ratio#
+        # img.resize(...) returns a resized image and does not effect img unless
+        # you assign the return value
+        img = img.resize((h * ratio, width * ratio), Image.ANTIALIAS)
+        '''
+
+def paint(event):
+    global color
+    paint_color = color
+
+    #def savePDF(self):
+
+
+
+# Set FullScreen
+root.attributes("-fullscreen", True)
+#root.geometry("900x600")
+#screenWidth = 900
+#screenHeight = 600
+
+# Save Screen Resolution
+screenWidth = root.winfo_screenwidth()
+screenHeight = root.winfo_screenheight()
 
 app = Window(root)
 
+
 # set window title
 root.wm_title("Slides")
-root.geometry("900x600")
-app.configure(background="grey")
+root.bind('<Motion>', paint)
+app.configure(background="black")
 
-# canvas.create_rectangle(50, 0, 100, 50, fill='red')
 
 # show window
 root.mainloop()
