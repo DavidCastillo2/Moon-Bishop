@@ -239,6 +239,45 @@ class Window(Frame):
         file = openfile()
         button = self.slide.create_rectangle(10, 10, 100, 30, fill="grey40", )
         self.slide.tag_bind(button, "<Button-1>", playsound.playsound(file, True))
+        
+    def load(self):
+        file_path = filedialog.askopenfilename()
+        photo = ImageTk.PhotoImage(file=file_path)
+        self.slide.create_image(0, 0, image=photo, anchor=NW)
+
+        img = Label(image=photo)
+        img.image = photo  # reference to image
+        
+    def new_slide(self):
+        x = self.slide.x
+        y = self.slide.y
+
+        im = grab(bbox=(self.slide.x, self.slide.y, x + self.slide.width + 4, y + self.slide.height + 4))
+
+        indexPath = Path(__file__).parent / "Slides/index.txt"
+        # Check to see if the index File exists
+        if not Path.exists(indexPath):
+            indexFile = open(indexPath, "w")
+            indexFile.write(str(1))  # Create Index File
+            index = 1
+        else:
+            indexFile = open(indexPath, "r+")
+            index = indexFile.readline()
+            index = int(index)
+            index = index + 1
+
+            # Update Index File
+            indexFile.close()
+            indexFile = open(indexPath, "w")
+            indexFile.close()
+            indexFile = open(indexPath, "r+")
+            indexFile.write(str(index))
+        # Save Image
+        tempString1 = "Slides/slide%s.jpeg" % index
+        im.save(tempString1, "JPEG")
+        imagePath = Path(__file__).parent / tempString1
+
+        self.slide.delete("all")
 
     def saveScreenShot(self):
         x = self.slide.x
