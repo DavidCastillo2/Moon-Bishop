@@ -11,19 +11,25 @@ import img2pdf
 import os
 import sys
 import playsound
-import webbrowser
-
+import _thread
 import random
 
 root = Tk()
 DEFAULT_COLOR = 'black'
 color = DEFAULT_COLOR
-mousePosX = 0
-mousePosY = 0
+
 
 def motion(event):
     x, y = event.x, event.y
 
+def soundButtonClick(path):
+    try:
+        _thread.start_new_thread(soundHelper, (path, ))
+    except:
+        print("FAILED TO MAKE THREAD SEND HELP")
+
+def soundHelper(filePath):
+    playsound.playsound(filePath)
 
 def showxy(event):
     global mousePosX
@@ -39,9 +45,9 @@ def openfile():
     return filename
 
 class popupWindow(object):
-    def __init__(self, master, label):
+    def __init__(self, master):
         top=self.top=Toplevel(master)
-        self.l=Label(top, text=label)
+        self.l=Label(top,text="Type in what you'd like displayed")
         self.l.pack()
         self.e=Entry(top)
         self.e.pack()
@@ -54,12 +60,9 @@ class popupWindow(object):
 class Window(Frame):
     DEFAULT_PEN_SIZE = 5.0
     DEFAULT_COLOR = 'black'
-    DEFAULT_TEXT_SIZE = 12
 
-    global color
-    global textsize
+    global color, mousePosX, mousePosY
     color = DEFAULT_COLOR
-    textsize = DEFAULT_TEXT_SIZE
 
     def toggle_geom(self, event):
         geom = self.master.winfo_geometry()
@@ -72,6 +75,10 @@ class Window(Frame):
         Frame.__init__(self, master)
         self.master = master
 
+        global mousePosX, mousePosY
+        mousePosX = math.ceil(screenWidth/2)
+        mousePosY = math.ceil(screenHeight/2)
+
         # Create slideArea inside of Frame
         self.slide = Canvas(self, width=math.ceil(650/900*screenWidth),
                             height=math.ceil(400/600*screenHeight), bg="white", highlightbackground="grey")
@@ -81,6 +88,7 @@ class Window(Frame):
         self.slide.width = math.ceil(650/900*screenWidth)
         self.slide.height = math.ceil(400/600*screenHeight)
         self.slide.update()
+        self.slide.id = 0   # Slides Have An ID
 
         # widget can take all window
         self.pack(fill=BOTH, expand=1)
@@ -98,28 +106,29 @@ class Window(Frame):
         saveButton = Button(self, text="Save", command=self.saveScreenShot,height=standardHeight, width=standardWidth)
         loadButton = Button(self, text="Load", height=standardHeight, width=standardWidth)
         colorButton = Button(self, text="Color", command=self.chooseColor, height=standardHeight, width=standardWidth)
-        self.brushButton = Button(self, text="Pen", command=self.use_pen, height=standardHeight, width=standardWidth)
+        brushButton = Button(self, text="Pen", command=self.paint, height=standardHeight, width=standardWidth)
         latexButton = Button(self, text="LaTex", height=standardHeight, width=standardWidth)
-        presentButton = Button(self, text="Present", height=standardHeight, width=math.ceil((12/900) * screenWidth))
+        presentButton = Button(self, text="Present", command=lambda: self.newWindow(presentation),
+                               height=standardHeight, width=math.ceil((12/900) * screenWidth))
 
         imageButton = Button(self, text="Image", command=self.upload_image, height=standardHeight, width=standardWidth)
-        linkButton = Button(self, text="Links", command=self.linker, height=standardHeight, width=standardWidth)
-        soundButton = Button(self, text="Sound", command=self.playSound, height=standardHeight, width=math.ceil(6/900 * screenWidth))
+        linkButton = Button(self, text="Links", height=standardHeight, width=standardWidth)
+        soundButton = Button(self, text="Sound", command=self.playSound, height=standardHeight,
+                             width=math.ceil(6/900 * screenWidth))
 
         textButton = Button(self, text="Text", command=self.type_text, height=standardHeight, width=standardWidth)
-
         codeButton = Button(self, text="Code", height=standardHeight, width=standardWidth)
-        txtsizeButton = Button(self, text="Text Size", command=self.textSize, height=standardHeight, width=math.ceil((6/900) * screenWidth))
+        txtsizeButton = Button(self, text="Text Size", height=standardHeight, width=math.ceil((6/900) * screenWidth))
 
-        newSlide = Button(self, text="New Slide", height=standardHeight, width=math.ceil(17/900*screenWidth))
+        newSlide = Button(self, text="New Slide", command=self.newSlide, height=standardHeight, width=math.ceil(17/900*screenWidth))
         numSlide = Button(self, text="Number Slides", height=standardHeight, width=math.ceil(17/900*screenWidth))
-        remSlide = Button(self, text="Remove Current Slide", height=standardHeight, width=math.ceil(17/900*screenWidth))
+        remSlide = Button(self, text="Remove Current Slide", command=self.removeSlide, height=standardHeight, width=math.ceil(17/900*screenWidth))
 
         slideColor = Button(self, text="Set Slide Color",
                             command=self.slide_color, height=standardHeight, width=math.ceil(12/900*screenWidth))
 
         # text
-        font = ["Times New Roman", "Comic Sans MS", "Bradley Hand ITC", "Broadway", "Brush Script MT"]
+        font = ["Times New Roman", "Bengali", "Comic Sans MS"]
         self.defFont = StringVar(master)
         self.defFont.set(font[0])  # default value
         fontButton = OptionMenu(self, self.defFont, *font)
@@ -134,7 +143,7 @@ class Window(Frame):
         presentButton.place(x=math.ceil(280/900*screenWidth), y=math.ceil(35/600*screenHeight))
         slideColor.place(x=math.ceil(380/900*screenWidth), y=math.ceil(35/600*screenHeight))
         textButton.place(x=math.ceil(480/900*screenWidth), y=math.ceil(35/600*screenHeight))
-        self.brushButton.place(x=math.ceil(530/900*screenWidth), y=math.ceil(35/600*screenHeight))
+        brushButton.place(x=math.ceil(530/900*screenWidth), y=math.ceil(35/600*screenHeight))
         colorButton.place(x=math.ceil(580/900*screenWidth), y=math.ceil(35/600*screenHeight))
 
         codeButton.place(x=math.ceil(233 / 900 * screenWidth), y=math.ceil(67 / 600 * screenHeight))
@@ -149,7 +158,94 @@ class Window(Frame):
         saveButton.place(x=math.ceil(800 / 900 * screenWidth), y=math.ceil(4 / 600 * screenHeight))
         loadButton.place(x=math.ceil(850 / 900 * screenWidth), y=math.ceil(35 / 600 * screenHeight))
 
+        # Create list of sound Buttons inside of This class
+        self.soundButtons = list()
+
+        # Create list of Slides inside of This class
+        self.slides = list()
+        self.slides.append(self.slide)
+
+        # Get mouse Position on Mouse Press
         self.slide.bind('<Button>', showxy)
+
+    def newWindow(self, _class):
+        self.new = Toplevel(self.master)
+        _class(self.new, self)
+
+    def newSlide(self):
+        # Save Current Slide
+        curIndex = self.slide.id
+
+        # Create slideArea inside of Frame
+        self.slide = Canvas(self, width=math.ceil(650/900*screenWidth),
+                            height=math.ceil(400/600*screenHeight), bg="white", highlightbackground="grey")
+        self.slide.place(x=math.ceil(125/900*screenWidth), y=math.ceil(150/600*screenHeight))
+        self.slide.x = math.ceil(125/900*screenWidth)
+        self.slide.y = math.ceil(150/600*screenHeight)
+        self.slide.width = math.ceil(650/900*screenWidth)
+        self.slide.height = math.ceil(400/600*screenHeight)
+        self.slide.update()
+        self.slide.id = curIndex + 1  # newSlide Index
+
+        # We are inserting a Slide
+        if curIndex+1 <= len(self.slides)-1:
+            print("case 1")
+            self.slides.insert(curIndex+1, self.slide)
+            self.shiftListRight(curIndex+1)
+
+        # We are at the End of the Slides List
+        else:
+            print("case 2")
+            self.slides.append(self.slide)
+            self.test()
+
+    def test(self):
+        for x in range(0, len(self.slides)):
+            print("Index: %s\tslideID: %s" %(x, self.slides[x].id))
+
+    def removeSlide(self):
+        # Method Tries to go backwards 1 slide in this self.slides list
+        curIndex = self.slide.id
+
+        # Only has 1 Slide
+        if (curIndex == 0) and (len(self.slides) == 1):
+            print("\nCASE 1")
+            self.shiftListLeft(curIndex)
+            self.slides.remove(self.slide)
+            self.slide.destroy()
+            self.slide.id = -1
+            self.newSlide()
+
+        # Removing something from inside of the list
+        elif curIndex > len(self.slides)-1:
+            print("\nCASE 2")
+            self.shiftListLeft(curIndex)
+            print("First %s" %curIndex)
+            self.test()
+            self.slide = self.slides[curIndex]
+            self.slides.remove(self.slide)
+            self.slide.destroy()
+            print("END")
+            self.test()
+            self.slide.place(x=math.ceil(125 / 900 * screenWidth), y=math.ceil(150 / 600 * screenHeight))
+
+
+        # Removing last item
+        else:
+            print("\nCASE 3")
+            self.slides.remove(self.slide)
+            self.slide.destroy()
+            self.slide = self.slides[len(self.slides) - 1]
+            self.slide.place(x=math.ceil(125 / 900 * screenWidth), y=math.ceil(150 / 600 * screenHeight))
+
+
+    def shiftListLeft(self, startIndex):
+        for i in range(startIndex, len(self.slides)-1):
+            self.slides[i].id = i-1
+
+    def shiftListRight(self, startIndex):
+        for i in range(startIndex, len(self.slides)-1):
+            self.slides[i].id = i+1
 
     def setup(self):
         self.old_x = None
@@ -166,24 +262,10 @@ class Window(Frame):
         col = askcolor()
         color = col[1]
 
-    def use_pen(self):
-        self.paint()
-
-    def paint(self, event):
-        self.line_width = 5
-
-        global color
-        paint_color = color
-        if self.old_x and self.old_y:
-            self.slide.create_line(self.old_x, self.old_y, event.x, event.y,
-                               width=self.line_width, fill=paint_color,
-                               capstyle=ROUND, smooth=TRUE, splinesteps=36)
-        self.old_x = event.x
-        self.old_y = event.y
-
-    def reset(self, event):
-        self.old_x, self.old_y = None, None
-
+    def paint(self):
+        x = random.randint(0, 600)
+        y = random.randint(0, 200)
+        self.slide.create_rectangle(x, x+50, y, y+50, fill=color)
 
     def upload_image(self):
         file_path = filedialog.askopenfilename()
@@ -198,34 +280,24 @@ class Window(Frame):
         img = Label(image=photo)
         img.image = photo  # reference to image
 
-    def linker(self):
-        self.popup("Input Search Term:")
-        webbrowser.open_new_tab('http://www.google.com/search?btnG=1&q=%s' % self.entryValue())
-
     def type_text(self):
         fontChoice = self.defFont.get()
         global color
-        global textsize
 
-        self.popup("Input text")
+        self.popup()
+
+        font = Font(family=fontChoice, size=12)
 
         global mousePosX
         global mousePosY
         x = mousePosX
         y = mousePosY
 
-        font = Font(family=fontChoice, size=textsize)
-        self.slide_id = self.slide.create_text(x, y, anchor="nw", font=font, fill=color)
+        self.slide.text = self.slide.create_text(x, y, anchor="nw", font=font, fill=color)
+        self.slide.itemconfig(self.slide.text, text=self.entryValue())
 
-        self.slide.itemconfig(self.slide_id, text=self.entryValue())
-
-    def textSize(self):
-        self.popup("Input text size")
-        global textsize
-        textsize = int(self.entryValue())
-
-    def popup(self, label):
-        self.w = popupWindow(self.master, label)
+    def popup(self):
+        self.w = popupWindow(self.master)
         self.master.wait_window(self.w.top)
 
     def entryValue(self):
@@ -237,52 +309,20 @@ class Window(Frame):
 
     def playSound(self):
         file = openfile()
-        button = self.slide.create_rectangle(10, 10, 100, 30, fill="grey40", )
-        self.slide.tag_bind(button, "<Button-1>", playsound.playsound(file, True))
-        
-    def load(self):
-        file_path = filedialog.askopenfilename()
-        photo = ImageTk.PhotoImage(file=file_path)
-        self.slide.create_image(0, 0, image=photo, anchor=NW)
-
-        img = Label(image=photo)
-        img.image = photo  # reference to image
-        
-    def new_slide(self):
-        x = self.slide.x
-        y = self.slide.y
-
-        im = grab(bbox=(self.slide.x, self.slide.y, x + self.slide.width + 4, y + self.slide.height + 4))
-
-        indexPath = Path(__file__).parent / "Slides/index.txt"
-        # Check to see if the index File exists
-        if not Path.exists(indexPath):
-            indexFile = open(indexPath, "w")
-            indexFile.write(str(1))  # Create Index File
-            index = 1
-        else:
-            indexFile = open(indexPath, "r+")
-            index = indexFile.readline()
-            index = int(index)
-            index = index + 1
-
-            # Update Index File
-            indexFile.close()
-            indexFile = open(indexPath, "w")
-            indexFile.close()
-            indexFile = open(indexPath, "r+")
-            indexFile.write(str(index))
-        # Save Image
-        tempString1 = "Slides/slide%s.jpeg" % index
-        im.save(tempString1, "JPEG")
-        imagePath = Path(__file__).parent / tempString1
-
-        self.slide.delete("all")
+        if (file != ''):
+            Height = math.ceil(self.slide.winfo_screenheight()/800*3)
+            Width = math.ceil(self.slide.winfo_screenwidth()/1280*5)
+            button = Button(self.slide, text="Sound", height=Height, width=Width,
+                            command=lambda: soundButtonClick(file))
+            global mousePosX, mousePosY
+            button.place(x=mousePosX, y=mousePosY)
+            self.soundButtons.append(button)
 
     def saveScreenShot(self):
         x = self.slide.x
         y = self.slide.y
         # the 4 here is because of the border the Canvas has
+        # PROBLEM
         im = grab(bbox=(self.slide.x, self.slide.y, x+self.slide.width+4, y+self.slide.height+4))
 
         indexPath = Path(__file__).parent / "Screenshots/index.txt"
@@ -354,7 +394,7 @@ screenWidth = root.winfo_screenwidth()
 screenHeight = root.winfo_screenheight()
 
 app = Window(root)
-print(f"Screen Width: {screenWidth}, Screen Height: {screenHeight}")
+
 
 # set window title
 root.wm_title("Slides")
