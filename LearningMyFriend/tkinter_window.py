@@ -108,7 +108,7 @@ class Window(Frame):
         colorButton = Button(self, text="Color", command=self.chooseColor, height=standardHeight, width=standardWidth)
         brushButton = Button(self, text="Pen", command=self.paint, height=standardHeight, width=standardWidth)
         latexButton = Button(self, text="LaTex", height=standardHeight, width=standardWidth)
-        presentButton = Button(self, text="Present", command=lambda: self.newWindow(presentation),
+        presentButton = Button(self, text="Present", command=lambda: self.newWindow(),
                                height=standardHeight, width=math.ceil((12/900) * screenWidth))
 
         imageButton = Button(self, text="Image", command=self.upload_image, height=standardHeight, width=standardWidth)
@@ -168,9 +168,21 @@ class Window(Frame):
         # Get mouse Position on Mouse Press
         self.slide.bind('<Button>', showxy)
 
-    def newWindow(self, _class):
-        self.new = Toplevel(self.master)
-        _class(self.new, self)
+    def newWindow(self):
+        cover = Canvas(self, width=screenWidth, height=screenHeight, bg="grey", highlightbackground="grey")
+        cover.place(relx=1.0, rely=1.0, x=0, y=0, anchor="se")
+        cover.exitButton = Button(self, text="Exit", command=lambda: self.removeWindow(cover),
+                            width=math.ceil(2*800/screenWidth),
+                            height=math.ceil(2*600/screenHeight), bg="red")
+        cover.exitButton.place(x=0, y=0)
+        cover.slides = self.slides
+        cover.slide = cover.slides[0]
+        cover.slide.place(relx=1.0, rely=1.0, x=0, y=0, anchor="se")
+        cover.slide.lift(self.master)
+
+    def removeWindow(self, cover):
+        cover.exitButton.destroy()
+        cover.destroy()
 
     def newSlide(self):
         # Save Current Slide
@@ -237,7 +249,6 @@ class Window(Frame):
             self.slide.destroy()
             self.slide = self.slides[len(self.slides) - 1]
             self.slide.place(x=math.ceil(125 / 900 * screenWidth), y=math.ceil(150 / 600 * screenHeight))
-
 
     def shiftListLeft(self, startIndex):
         for i in range(startIndex, len(self.slides)-1):
