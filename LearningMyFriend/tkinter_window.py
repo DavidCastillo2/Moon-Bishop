@@ -172,17 +172,33 @@ class Window(Frame):
         cover = Canvas(self, width=screenWidth, height=screenHeight, bg="grey", highlightbackground="grey")
         cover.place(relx=1.0, rely=1.0, x=0, y=0, anchor="se")
         cover.exitButton = Button(self, text="Exit", command=lambda: self.removeWindow(cover),
-                            width=math.ceil(2*800/screenWidth),
+                            width=math.ceil(10*800/screenWidth),
                             height=math.ceil(2*600/screenHeight), bg="red")
         cover.exitButton.place(x=0, y=0)
         cover.slides = self.slides
         cover.slide = cover.slides[0]
-        cover.slide.place(relx=1.0, rely=1.0, x=0, y=0, anchor="se")
-        cover.slide.lift(self.master)
+        # Raise Canvas over Canvas
+        Misc.lift(cover.slide)
+        cover.nextButton = Button(self, text="Next .>", command=lambda: self.advanceSlide(cover),
+                            width=math.ceil(10*800/screenWidth),
+                            height=math.ceil(2*600/screenHeight), bg="green")
+        cover.nextButton.place(x=screenWidth-40, y=0)
+
+    def advanceSlide(self, cover):
+        if cover.slide.id < len(cover.slides)-1:
+            id = cover.slide.id
+            #cover.slide.destroy()
+            cover.slide = cover.slides[id+1]
+            Misc.lift(cover.slide)
+        else:
+            #cover.slide.destroy()
+            self.removeWindow(cover)
 
     def removeWindow(self, cover):
         cover.exitButton.destroy()
+        cover.nextButton.destroy()
         cover.destroy()
+        Misc.lift(self.slide)
 
     def newSlide(self):
         # Save Current Slide
@@ -201,13 +217,11 @@ class Window(Frame):
 
         # We are inserting a Slide
         if curIndex+1 <= len(self.slides)-1:
-            print("case 1")
             self.slides.insert(curIndex+1, self.slide)
             self.shiftListRight(curIndex+1)
 
         # We are at the End of the Slides List
         else:
-            print("case 2")
             self.slides.append(self.slide)
             self.test()
 
@@ -221,7 +235,6 @@ class Window(Frame):
 
         # Only has 1 Slide
         if (curIndex == 0) and (len(self.slides) == 1):
-            print("\nCASE 1")
             self.shiftListLeft(curIndex)
             self.slides.remove(self.slide)
             self.slide.destroy()
@@ -230,21 +243,17 @@ class Window(Frame):
 
         # Removing something from inside of the list
         elif curIndex > len(self.slides)-1:
-            print("\nCASE 2")
             self.shiftListLeft(curIndex)
-            print("First %s" %curIndex)
             self.test()
             self.slide = self.slides[curIndex]
             self.slides.remove(self.slide)
             self.slide.destroy()
-            print("END")
             self.test()
             self.slide.place(x=math.ceil(125 / 900 * screenWidth), y=math.ceil(150 / 600 * screenHeight))
 
 
         # Removing last item
         else:
-            print("\nCASE 3")
             self.slides.remove(self.slide)
             self.slide.destroy()
             self.slide = self.slides[len(self.slides) - 1]
