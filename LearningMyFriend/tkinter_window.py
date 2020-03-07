@@ -11,12 +11,15 @@ import img2pdf
 import os
 import sys
 import playsound
+import webbrowser
 
 import random
 
 root = Tk()
 DEFAULT_COLOR = 'black'
 color = DEFAULT_COLOR
+mousePosX = 0
+mousePosY = 0
 
 def motion(event):
     x, y = event.x, event.y
@@ -95,15 +98,16 @@ class Window(Frame):
         saveButton = Button(self, text="Save", command=self.saveScreenShot,height=standardHeight, width=standardWidth)
         loadButton = Button(self, text="Load", height=standardHeight, width=standardWidth)
         colorButton = Button(self, text="Color", command=self.chooseColor, height=standardHeight, width=standardWidth)
-        brushButton = Button(self, text="Pen", command=self.paint, height=standardHeight, width=standardWidth)
+        self.brushButton = Button(self, text="Pen", command=self.use_pen, height=standardHeight, width=standardWidth)
         latexButton = Button(self, text="LaTex", height=standardHeight, width=standardWidth)
         presentButton = Button(self, text="Present", height=standardHeight, width=math.ceil((12/900) * screenWidth))
 
         imageButton = Button(self, text="Image", command=self.upload_image, height=standardHeight, width=standardWidth)
-        linkButton = Button(self, text="Links", height=standardHeight, width=standardWidth)
+        linkButton = Button(self, text="Links", command=self.linker, height=standardHeight, width=standardWidth)
         soundButton = Button(self, text="Sound", command=self.playSound, height=standardHeight, width=math.ceil(6/900 * screenWidth))
 
         textButton = Button(self, text="Text", command=self.type_text, height=standardHeight, width=standardWidth)
+
         codeButton = Button(self, text="Code", height=standardHeight, width=standardWidth)
         txtsizeButton = Button(self, text="Text Size", command=self.textSize, height=standardHeight, width=math.ceil((6/900) * screenWidth))
 
@@ -115,7 +119,7 @@ class Window(Frame):
                             command=self.slide_color, height=standardHeight, width=math.ceil(12/900*screenWidth))
 
         # text
-        font = ["Times New Roman", "Bengali", "Comic Sans MS"]
+        font = ["Times New Roman", "Comic Sans MS", "Bradley Hand ITC", "Broadway", "Brush Script MT"]
         self.defFont = StringVar(master)
         self.defFont.set(font[0])  # default value
         fontButton = OptionMenu(self, self.defFont, *font)
@@ -130,7 +134,7 @@ class Window(Frame):
         presentButton.place(x=math.ceil(280/900*screenWidth), y=math.ceil(35/600*screenHeight))
         slideColor.place(x=math.ceil(380/900*screenWidth), y=math.ceil(35/600*screenHeight))
         textButton.place(x=math.ceil(480/900*screenWidth), y=math.ceil(35/600*screenHeight))
-        brushButton.place(x=math.ceil(530/900*screenWidth), y=math.ceil(35/600*screenHeight))
+        self.brushButton.place(x=math.ceil(530/900*screenWidth), y=math.ceil(35/600*screenHeight))
         colorButton.place(x=math.ceil(580/900*screenWidth), y=math.ceil(35/600*screenHeight))
 
         codeButton.place(x=math.ceil(233 / 900 * screenWidth), y=math.ceil(67 / 600 * screenHeight))
@@ -162,10 +166,24 @@ class Window(Frame):
         col = askcolor()
         color = col[1]
 
-    def paint(self):
-        x = random.randint(0, 600)
-        y = random.randint(0, 200)
-        self.slide.create_rectangle(x, x+50, y, y+50, fill=color)
+    def use_pen(self):
+        self.paint()
+
+    def paint(self, event):
+        self.line_width = 5
+
+        global color
+        paint_color = color
+        if self.old_x and self.old_y:
+            self.slide.create_line(self.old_x, self.old_y, event.x, event.y,
+                               width=self.line_width, fill=paint_color,
+                               capstyle=ROUND, smooth=TRUE, splinesteps=36)
+        self.old_x = event.x
+        self.old_y = event.y
+
+    def reset(self, event):
+        self.old_x, self.old_y = None, None
+
 
     def upload_image(self):
         file_path = filedialog.askopenfilename()
@@ -179,6 +197,10 @@ class Window(Frame):
         self.slide.create_image(x, y, image=photo, anchor=NW)
         img = Label(image=photo)
         img.image = photo  # reference to image
+
+    def linker(self):
+        self.popup("Input Search Term:")
+        webbrowser.open_new_tab('http://www.google.com/search?btnG=1&q=%s' % self.entryValue())
 
     def type_text(self):
         fontChoice = self.defFont.get()
@@ -282,3 +304,24 @@ def paint(event):
     paint_color = color
 
     #def savePDF(self):
+
+
+
+# Set FullScreen
+root.attributes("-fullscreen", True)
+
+# Save Screen Resolution
+screenWidth = root.winfo_screenwidth()
+screenHeight = root.winfo_screenheight()
+
+app = Window(root)
+print(f"Screen Width: {screenWidth}, Screen Height: {screenHeight}")
+
+# set window title
+root.wm_title("Slides")
+root.bind('<Motion>', paint)
+app.configure(background="black")
+
+
+# show window
+root.mainloop()
